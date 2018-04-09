@@ -3,7 +3,6 @@ U/N: sith6522@gmail.com
 P/W: opencvftw
 """
 
-
 from __future__ import division
 import numpy as np #pip install numpy
 from PIL import ImageGrab # pip3 install Pillow
@@ -83,17 +82,34 @@ def main():
 def writeImageToFile(image, frame_count, path, frame_rate):
     #Create a new directory for this run of images
     if frame_count % frame_rate == 0:
-        file_name = path + '/image_detection_training_' + str(frame_count) + '.png'
+        file_name = path + '/image_detection_training_' + str(int(frame_count/frame_rate)) + '.png'
         cv2.imwrite(file_name, image)
 
 def createTrainingDataDir():
     #Create a new directory for this run of images
     now = datetime.datetime.now()
     #TODO: datetime formatter instead of concat
-    date_string = str(now.year) + str(now.month) + str(now.day) + str(now.hour) + str(now.minute) + str(now.second)
+    date_string = str(now.year) + str(now.month) + str(now.day) + str(now.hour)
     path = './training_images/' + date_string
-    os.mkdir(path)
+    if not os.path.exists(path):
+        print('No directory found. Making new directory at ' + date_string)
+        os.makedirs(path)
+    else:
+        print('Directory found!')
     return path
+
+def labelimg():
+    """
+    1: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+       git clone https://github.com/tzutalin/labelImg.git
+    2: brew install qt  # will install qt-5.x.x
+    3: brew install libxml2
+    4: navigate to the labelImg directory
+    5: make qt5py3 
+    6: python3 labelImg.py
+    """
+    
+
 
 main()
 
