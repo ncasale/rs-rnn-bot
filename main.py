@@ -1,3 +1,9 @@
+"""Login for the account:
+U/N: sith6522@gmail.com
+P/W: opencvftw
+"""
+
+
 from __future__ import division
 import numpy as np #pip install numpy
 from PIL import ImageGrab # pip3 install Pillow
