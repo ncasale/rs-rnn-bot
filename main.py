@@ -88,8 +88,14 @@ def writeImageToFile(image, frame_count, path, frame_rate):
 def createTrainingDataDir():
     #Create a new directory for this run of images
     now = datetime.datetime.now()
-    #TODO: datetime formatter instead of concat
-    date_string = str(now.year) + str(now.month) + str(now.day) + str(now.hour)
+
+    #Format day/month/hour correctly
+    month = str(now.month) if now.month >= 10 else '0' + str(now.month)
+    day = str(now.day) if now.day >= 10 else '0' + str(now.day)
+    hour = str(now.hour) if now.hour >= 10 else '0' + str(now.hour)
+
+    #Create path to directory
+    date_string = str(now.year) + month + day + hour
     path = './training_images/' + date_string
     if not os.path.exists(path):
         print('No directory found. Making new directory at ' + date_string)
