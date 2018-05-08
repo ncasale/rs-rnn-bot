@@ -85,17 +85,6 @@ def createTrainingDataDir():
         print('Directory found!')
     return path
 
-def labelimg():
-    """
-    1: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-       git clone https://github.com/tzutalin/labelImg.git
-    2: brew install qt  # will install qt-5.x.x
-    3: brew install libxml2
-    4: navigate to the labelImg directory
-    5: make qt5py3 
-    6: python3 labelImg.py
-    """
-    
 def left_down(event):
     print ("left click")
     print ('Position:',event.Position)
