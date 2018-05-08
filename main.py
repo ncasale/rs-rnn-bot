@@ -95,27 +95,49 @@ def labelimg():
     5: make qt5py3 
     6: python3 labelImg.py
     """
+    
 def left_down(event):
     print ("left click")
     print ('Position:',event.Position)
+    return True
+
+def left_up(event):
+    print ("left release")
+    print ('Position:',event.Position)
     return True  
-                
 
 def right_down(event):
     print ("right click")
     print ('Position:',event.Position)
     return True    
+
+def right_up(event):
+    print ("right release")
+    print ('Position:',event.Position)
+    return True   
     
 def OnKeyboardEvent(event):
     print (event.Key)
     return True    
-    
+
+print("Starting Script...")
+# hook mouse
+hm = pyHook.HookManager()
+hm.SubscribeMouseLeftDown(left_down)
+hm.SubscribeMouseLeftUp(left_up)
+hm.SubscribeMouseRightDown(right_down)
+hm.SubscribeMouseRightUp(right_up)
+
+print("Mouse Hooked. Hooking Keyboard.")
+# hook keyboard
+hm.KeyDown = OnKeyboardEvent # watch for all keyboard events
+
 def main():
     #Provide 4 second countdown before recording to navigate to window 
     for i in list(range(4))[::-1]:
         print(i+1)
         time.sleep(1)
-    
+
     #Time used for loop timing
     last_time = time.time()
 
@@ -148,16 +170,15 @@ def main():
 
         while(left_down == True):  ## Todo: Right now, this works for registering when a mouse button is clicked but cant register when a key/mouse button is lifted
             pythoncom.PumpMessages()
-
-
+           
         #check how long the loop took to run
-        print('loop took {} seconds'.format(time.time()-last_time))
+        # print('loop took {} seconds'.format(time.time()-last_time))
         last_time = time.time()
 
         #Top line shows the edge detection window. Line below shows color image
         # cv2.imshow('window', new_screen)
         image = cv2.cvtColor(printscreen, cv2.COLOR_BGR2RGB)
-        
+
         #Save image to file
         writeImageToFile(image, current_frame, training_data_path, frame_rate)
 
@@ -216,17 +237,6 @@ def labelimg():
     6: python3 labelImg.py
     """
     
-
-
-print("Starting Script...")
-# hook mouse
-hm = pyHook.HookManager()
-hm.SubscribeMouseLeftDown(left_down)
-hm.SubscribeMouseRightDown(right_down)
-
-print("Mouse Hooked. Hooking Keyboard.")
-# hook keyboard
-hm.KeyDown = OnKeyboardEvent # watch for all keyboard events
 
 
 print("Keyboard Hooked. Starting main.")
