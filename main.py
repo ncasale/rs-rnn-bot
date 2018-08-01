@@ -10,6 +10,10 @@ import numpy as np
 
 from neural_network import NeuralNetwork
 
+from sklearn.model_selection import GridSearchCV
+from keras.wrappers.scikit_learn import KerasRegressor
+from keras.layers import Activation, Dense
+from keras.models import Sequential
 
 if __name__ == '__main__':
     #Get a list of all items
@@ -115,3 +119,31 @@ if __name__ == '__main__':
     nn.generateInitialNetwork([1,1])
     nn.calculateNodeActivations()
     print(nn.outputNode.getActivation())
+
+    #import keras.backend as K
+    train_x = test_item.iloc[2]['train_x'] # test data. not real
+    train_y = test_item.iloc[2]['train_y'] # test data. not real
+
+    
+    def create_model(layers,activation):
+        model = Sequential()
+        for i, nodes in enumerate(layers):
+            if i==0:
+                model.add(Dense(nodes,input_dim=train_x.shape[1]))
+                model.add(Activation(activation))
+            else: 
+                model.add(Dense(nodes))
+                model.add(Activation(activation))
+        model.add(Dense(1)) #Note: no activations present beyond this point
+
+        model.compile(optimizer='adadelta', loss='mse')
+        return model
+
+    print('creating model')
+    model = KerasRegressor(build_fn=create_model, verbose = 0)
+    layers = [[16], [4,2], [4], [16,4]]
+    activations = ['tanh', 'relu']
+    param_grid = dict(layers=layers, activation=activations, batch_size = [42, 180], epochs=[6])
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring='neg_mean_squared_error')
+
+    grid_result = grid.fit(train_x, train_y)
