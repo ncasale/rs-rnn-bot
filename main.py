@@ -7,6 +7,7 @@ import datetime
 import time
 import math
 import numpy as np
+import random
 
 from neural_network import NeuralNetwork
 
@@ -86,7 +87,8 @@ if __name__ == '__main__':
     test_set_size = 30 #In Days - define the number of epochs to include in the test data
 
     #create test_item object to log training and test sets
-    test_item = pd.DataFrame(columns=['id', 'name', 'train_x', 'train_y', 'test_x', 'test_y', 'pred_y'])
+    #test_item = pd.DataFrame(columns=['id', 'name', 'train_x', 'train_y', 'test_x', 'test_y', 'pred_y'])
+    test_item = pd.DataFrame(columns=['id', 'name', 'train', 'test', 'pred_y'])
     h = 0
     #iterate through the urlquery results to generate training sets
     while(h<urlquery['id'].count()):  
@@ -94,22 +96,23 @@ if __name__ == '__main__':
         print("Item ID: " + str(item_id))
         #takes the item_id and generates the test data for the specified parameters as an array
         test_set = urlquery.loc[urlquery['id'] == item_id]
-        train_x_headers = list(urlquery.iloc[0]['data'].columns.values[0:5])
+        train_x_headers = list(urlquery.iloc[0]['data'].columns.values[0:6])
         
         #for column key, uncomment this line below:
         #print(train_x_headers)
 
         #create training datasets
-        train_x = test_set.iloc[0]['data'].iloc[0:math.ceil(test_set_size*6)].values[:,0:5]
-        train_y = test_set.iloc[0]['data'].iloc[0:math.ceil(test_set_size*6)].values[:,5]
-        print ("The shape of the " + test_set.iloc[0]['name'] +  " input array is: "+ str(train_x.shape))
+        train = test_set.iloc[0]['data'].iloc[0:math.ceil(test_set_size*6)].values[:,0:6]
+        # train = test_set.iloc[0]['data'].iloc[0:math.ceil(test_set_size*6)].values[:,5]
+        print ("The shape of the " + test_set.iloc[0]['name'] +  " input array is: "+ str(train.shape))
 
         #create test set to estimate next 6 prices (next day of prices)
-        test_x = test_set.iloc[0]['data'].iloc[math.ceil(test_set_size*6):math.ceil(test_set_size*6)+6].values[:,0:5]
+        test = test_set.iloc[0]['data'].iloc[math.ceil(test_set_size*6):math.ceil(test_set_size*6)+6].values[:,0:6]
 
         #test key to compare to Y-hat
-        test_y = test_set.iloc[0]['data'].iloc[math.ceil(test_set_size*6):math.ceil(test_set_size*6)+6].values[:,5]
-        test_item = test_item.append({'id':item_id, 'name': test_set.iloc[0]['name'], 'train_x':train_x, 'train_y':train_y, 'test_x':test_x, 'test_y': test_y}, ignore_index=True)
+        #test_y = test_set.iloc[0]['data'].iloc[math.ceil(test_set_size*6):math.ceil(test_set_size*6)+6].values[:,5]
+        #test_item = test_item.append({'id':item_id, 'name': test_set.iloc[0]['name'], 'train_x':train_x, 'train_y':train_y, 'test_x':test_x, 'test_y': test_y}, ignore_index=True)
+        test_item = test_item.append({'id':item_id, 'name': test_set.iloc[0]['name'], 'train': train, 'test':test}, ignore_index=True)
         print("Record completed at test_item position [" + str(h) + "]")
         h += 1
         #TODO: Get this all in a for loop to iterate over multiple entries
@@ -119,10 +122,13 @@ if __name__ == '__main__':
     nn.generateInitialNetwork([1,1])
     nn.calculateNodeActivations()
     print(nn.outputNode.getActivation())
+    print(test_item.iloc[0]['train'])
 
-    #import keras.backend as K
-    train_x = test_item.iloc[2]['train_x'] # test data. not real
-    train_y = test_item.iloc[2]['train_y'] # test data. not real
+
+
+
+    #everything below this point is for testing the network size/structure. This uses the Keras library within TensorFlow.
+
 
     
     def create_model(layers,activation):
@@ -138,12 +144,8 @@ if __name__ == '__main__':
 
         model.compile(optimizer='adadelta', loss='mse')
         return model
-
-    print('creating model')
     model = KerasRegressor(build_fn=create_model, verbose = 0)
     layers = [[16], [4,2], [4], [16,4]]
     activations = ['tanh', 'relu']
     param_grid = dict(layers=layers, activation=activations, batch_size = [42, 180], epochs=[6])
     grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring='neg_mean_squared_error')
-
-    grid_result = grid.fit(train_x, train_y)
