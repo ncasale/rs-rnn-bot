@@ -133,7 +133,7 @@ def createTrainAndTestSet(item_records):
     #iterate through the urlquery results to generate training sets
     while(record_index < item_records['id'].count()):  
         item_id = item_records.iloc[record_index]['id'] 
-        print("Item ID: " + str(item_id))
+        print("Creating Datasets for item ID: " + str(item_id))
         
         #takes the item_id and generates the test data for the specified parameters as an array
         test_set = item_records.loc[item_records['id'] == item_id]
