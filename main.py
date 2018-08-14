@@ -153,8 +153,7 @@ def createTrainAndTestSet(item_records):
         generate_train_and_test_deltas(item_records)
 
         #test key to compare to Y-hat
-        test_item = 0
-        #test_item = test_item.append({'id':item_id, 'name': test_set.iloc[0]['name'], 'train_val': train_val, 'test_val': test_val, 'train_per': train_per, 'test_per': test_per}, ignore_index=True)
+        test_item = test_item.append({'id':item_id, 'name': test_set.iloc[0]['name'], 'train_val': train_val, 'test_val': test_val, 'train_per': 0, 'test_per': 0}, ignore_index=True)
         print("Record completed at test_item position [" + str(record_index) + "]")
         record_index += 1
 
@@ -176,11 +175,12 @@ if __name__ == '__main__':
 
     #Create test_item object to log training and test sets
     test_item = createTrainAndTestSet(item_records)
+    print(test_item)
 
     #Test creation of Neural Net
     nn = NeuralNetwork()
-    nn.generateInitialNetwork([1,1])
     nn.calculateNodeActivations()
+    nn.generateInitialNetwork([1,1])
     print(nn.outputNode.getActivation())
 
     #TODO: Create Year time stamp for seasonality
