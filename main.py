@@ -3,6 +3,7 @@ import requests
 from pandas.io.json import json_normalize
 import json
 import pandas as pd
+pd.options.mode.chained_assignment = None
 import datetime
 import time
 import math
@@ -16,7 +17,6 @@ from keras.wrappers.scikit_learn import KerasRegressor
 from keras.layers import Activation, Dense
 from keras.models import Sequential
 """
-
 
 def generate_item_records_from_summary():
     """ Generate item records using the summary.json link from the OSBuddy API """
@@ -84,16 +84,50 @@ def get_item_records_from_url(input_data, test_set_size):
     return item_records
 
 def format_item_record_dates(item_records):
-    """ Converts timestamp to Unix seconds, and tacks on formatted date field """
+    """ Converts timestamp to Unix seconds, tacks on formatted date field, and creates Unix seconds from most recent datapoint, and Unix seconds position from Jan-1"""
 
-    print("Formatting item record dates...")
     for _, row in item_records.iterrows():
+        print("Formatting item record dates for: " +  row['name'] + "...")
         row['data'] = row['data'][['ts','buyingPrice','buyingCompleted','sellingPrice','sellingCompleted', 'overallPrice','overallCompleted']]
         row['data'] = row['data'].sort_values(by=['ts'],ascending=1).reset_index()
         for ind, r in row['data'].iterrows():
-            r['ts'] = r['ts']/1000
+            r['ts'] = int(r['ts']/1000)
             row['data'].loc[ind, 'ts'] = int(r['ts'])
+        timestamps = pd.DataFrame(columns=['ts','tsFromCurrent', 'tsYtd'],data=row['data']['ts'])
+        lastTs = timestamps['ts'][len(timestamps)-1]
+        i = 0
+        print ('Finding timestamps from most recent datapoint.')
+        while(i<len(timestamps)):
+            timestamps['tsFromCurrent'][i] = abs(timestamps['ts'][i] - lastTs)    
+            i += 1
+        years = pd.DataFrame(columns=['year', 'unix'])    
+        i = 0
+        for year in range(2015,2050):
+            unix = (year - 1970) * 31557600
+            years.loc[i] = [year,unix]
+            i+=1
+
+        i = 0
+        j = 0
+        newYear = True
+        while(i<len(timestamps)):
+            unixYear = years.iloc[j]['unix']
+            if newYear == True:
+                print("Checking entries for year: " + str(years.iloc[j]['year']))
+            ytd = abs(timestamps['ts'][i] - unixYear)
+            if(ytd < 31557600):
+                ytd = abs(timestamps.iloc[i]['ts'] - unixYear)
+                timestamps['tsYtd'][i] = int(ytd)
+                i += 1
+                newYear = False
+            else: 
+                print("Done with this year. Moving on to the next.")
+                j += 1
+                newYear = True
+        for ind, r in row['data'].iterrows():
             row['data'].loc[ind, 'date'] = datetime.datetime.fromtimestamp(r['ts']).isoformat()
+            row['data'].loc[ind, 'tsFromCurrent'] = timestamps.iloc[ind]['tsFromCurrent']
+            row['data'].loc[ind, 'tsYtd'] = timestamps.iloc[ind]['tsYtd']            
         row['data'] = row['data'].drop(labels='index',axis=1)
     return item_records
 
@@ -133,7 +167,7 @@ def createTrainAndTestSet(item_records):
     #iterate through the urlquery results to generate training sets
     while(record_index < item_records['id'].count()):  
         item_id = item_records.iloc[record_index]['id'] 
-        print("Item ID: " + str(item_id))
+        print("Creating Datasets for item ID: " + str(item_id))
         
         #takes the item_id and generates the test data for the specified parameters as an array
         test_set = item_records.loc[item_records['id'] == item_id]
@@ -159,29 +193,6 @@ def createTrainAndTestSet(item_records):
         record_index += 1
 
     return test_item
-
-if __name__ == '__main__':
-    #Get a list of all items
-    generate_item_records_from_summary()
-
-    #Pull items by range of Index values
-    input_data = generate_input_data_by_item_number(0,3)
-    
-    #Pull specific items by name
-    #input_data = generate_input_data_by_item_name(['Armadyl godsword','Fire rune', 'Soft clay'])
-
-    #In Days - define the number of epochs to include in the test data
-    test_set_size = 30
-    item_records = get_item_records_from_url(input_data, test_set_size)
-
-    #Create test_item object to log training and test sets
-    test_item = createTrainAndTestSet(item_records)
-
-    #Test creation of Neural Net
-    nn = NeuralNetwork()
-    nn.generateInitialNetwork([1,1])
-    nn.calculateNodeActivations()
-    print(nn.outputNode.getActivation())
 
     #TODO: Create Year time stamp for seasonality
     #TODO: Create time from today time stamp
@@ -218,3 +229,26 @@ if __name__ == '__main__':
     grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring='neg_mean_squared_error')
 
     # grid_result = grid.fit(train_x, train_y) testing for network size """
+
+if __name__ == '__main__':
+    #Get a list of all items
+    generate_item_records_from_summary()
+
+    #Pull items by range of Index values
+    input_data = generate_input_data_by_item_number(0,3)
+    
+    #Pull specific items by name
+    #input_data = generate_input_data_by_item_name(['Armadyl godsword','Fire rune', 'Soft clay'])
+
+    #In Days - define the number of epochs to include in the test data
+    test_set_size = 30
+    item_records = get_item_records_from_url(input_data, test_set_size)
+
+    #Create test_item object to log training and test sets
+    test_item = createTrainAndTestSet(item_records)
+
+    #Test creation of Neural Net
+    nn = NeuralNetwork()
+    nn.generateInitialNetwork([1,1])
+    nn.calculateNodeActivations()
+    print(nn.outputNode.getActivation())
