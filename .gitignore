@@ -1,5 +1,6 @@
 *.pyc
-__pycache__/*
-.vscode/*
-tensorflow/*
-.ipynb_checkpoints/*
+__pycache__/
+.vscode/
+tensorflow/
+.ipynb_checkpoints/
+._*
